@@ -1,4 +1,5 @@
 #!/bin/python3
+import os
 import subprocess
 import sys
 
@@ -25,12 +26,26 @@ def accept_eula(product_slug, release_version):
 
 def download_greenplum(product_slug, release_version, os_version):
     """Download Greenplum for the specified product, release version, and OS version."""
-    if os_version == 'redhat 7':
-        file_name = f"greenplum-db-{release_version}-rhel7-x86_64.rpm"
-    elif os_version == 'redhat 8':
-        file_name = f"greenplum-db-{release_version}-el8-x86_64.rpm"
+    if release_version.startswith('6') or release_version.startswith('5'):
+        if os_version == 'redhat7':
+            file_name = f"greenplum-db-{release_version}-rhel7-x86_64.rpm"
+        elif os_version == 'redhat8':
+            file_name = f"greenplum-db-{release_version}-rhel8-x86_64.rpm"
+        elif os_version == 'redhat9':
+            file_name = f"greenplum-db-{release_version}-rhel9-x86_64.rpm"
+        else:
+            print(f"Unsupported OS version: {os_version}")
+            sys.exit(1)
+    elif release_version.startswith('7'):
+        if os_version == 'redhat8':
+            file_name = f"greenplum-db-{release_version}-el8-x86_64.rpm"
+        elif os_version == 'redhat9':
+            file_name = f"greenplum-db-{release_version}-el8-x86_64.rpm"
+        else:
+            print(f"Unsupported OS version: {os_version}")
+            sys.exit(1)
     else:
-        print(f"Unsupported OS version: {os_version}")
+        print (f"Something is wrong,release version:{release_version}, os: {os_version}")
         sys.exit(1)
 
     command = f"pivnet download-product-files --product-slug='{product_slug}' --release-version='{release_version}' -g '{file_name}'"
@@ -69,19 +84,24 @@ def select_greenplum_version(product_slug):
 def select_os_version():
     """Ask user to select an OS version."""
     while True:
-        os_version = input("Enter your OS version (redhat 7, redhat 8): ").strip().lower()
-        if os_version in ['redhat 7', 'redhat 8']:
+        os_version = input("Enter your OS version (redhat7, redhat8,redhat9): ").strip().lower()
+        if os_version in ['redhat7', 'redhat8','redhat9']:
             return os_version
         else:
-            print("Unsupported OS version. Please choose from redhat 7 or redhat 8.")
+            print("Unsupported OS version. Please choose from redhat7,redhat8,redhat9.")
 
 def main():
     try:
         # Ask for PivNet token
-        pivnet_token = input("Enter your PivNet API token: ").strip()
+        if os.path.exists('.pivnet_token'):
+            print("Found the Pivnet Token on the local system, using the local token to login")
+            with open('.pivnet_token', 'r') as file:
+                pivnet_token = file.read().strip()
+        else:
+           pivnet_token = input("Enter your PivNet API token: ").strip()
+	# Ask for OS version
+        print("Logging in the Pivnet")
         pivnet_login(pivnet_token)
-
-        # Ask for OS version
         os_version = select_os_version()
 
         # Select Greenplum version
