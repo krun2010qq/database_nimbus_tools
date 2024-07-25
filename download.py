@@ -65,12 +65,12 @@ def select_greenplum_version(product_slug):
     if not versions:
         print("No Greenplum versions found.")
         sys.exit(1)
-
     while True:
         print("Available Greenplum versions:")
-        for idx, version in enumerate(versions, start=1):
-            print(f"{idx}. {version}")
-        
+        for idx in range(0, len(versions), 6):
+            line = versions[idx:idx + 6]
+            print("  ".join(f"{i+1}:[{v}]" for i, v in enumerate(line, start=idx)))
+
         version_choice = input("Enter the number corresponding to the Greenplum version you want to download: ").strip()
         try:
             version_index = int(version_choice) - 1
