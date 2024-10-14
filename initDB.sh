@@ -49,6 +49,18 @@ debug_print "Updating gpinitsystem_config_gpdb6 file"
 sed -i "s/MASTER_HOSTNAME=.*/MASTER_HOSTNAME=$current_hostname/" gpinitsystem_config_gpdb6
 debug_print "gpinitsystem_config_gpdb6 updated"
 
+# Ask user if we need to delete the data directory
+read -p "Do you want to clean up the data directory? (yes/no): " confirm
+
+if [[ "$confirm" == "yes" ]]; then
+    debug_print "Cleaning up the data directory"
+    find /data/ -mindepth 2 -delete
+    debug_print "Completed the cleaning up of the data directory"
+else
+    debug_print "Skipping the cleanup of the data directory"
+fi
+
+
 # Update gpinitsystem_config_gpdb7 file
 debug_print "Updating gpinitsystem_config_gpdb7 file"
 sed -i "s/COORDINATOR_HOSTNAME=.*/COORDINATOR_HOSTNAME=$current_hostname/" gpinitsystem_config_gpdb7
