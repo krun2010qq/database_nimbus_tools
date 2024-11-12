@@ -43,3 +43,148 @@ EULA acccepted for vmware-greenplum/7.2.0
 2024/07/25 11:11:53 Verifying SHA256
 2024/07/25 11:11:53 Successfully verified SHA256
 ```
+
+
+### How to deploy the pg_auto_failover automatically
+
+// Firstly remove all the previous installations
+```
+[postgres@rabbitmq2 pg_auto_failover_deployment]$ ./remove_pg_auto_failover.py
+2024-11-12 01:29:51,986 - INFO - Starting cleanup process
+2024-11-12 01:29:51,986 - INFO - Attempting to stop pgautofailover.service
+2024-11-12 01:29:52,209 - INFO - Disabling pgautofailover.service
+2024-11-12 01:29:52,343 - INFO - Removing pgautofailover.service file
+2024-11-12 01:29:52,357 - INFO - Reloading systemd daemon
+2024-11-12 01:29:52,485 - INFO - Resetting failed units
+2024-11-12 01:29:52,503 - INFO - Folder not found: /var/lib/pgsql/monitor
+2024-11-12 01:29:52,503 - INFO - Deleting folder: /var/lib/pgsql/ha
+2024-11-12 01:29:52,539 - INFO - Successfully deleted /var/lib/pgsql/ha
+2024-11-12 01:29:52,539 - INFO - Deleting folder: /var/lib/pgsql/.config
+2024-11-12 01:29:52,540 - INFO - Successfully deleted /var/lib/pgsql/.config
+2024-11-12 01:29:52,540 - INFO - Deleting folder: /var/lib/pgsql/.local
+2024-11-12 01:29:52,540 - INFO - Successfully deleted /var/lib/pgsql/.local
+2024-11-12 01:29:52,540 - INFO - Cleanup process completed
+```
+
+// Then set up the monitor
+```
+[postgres@rabbitmq1 pg_auto_failover_deployment]$ ./remove_pg_auto_failover.py
+2024-11-12 01:29:22,562 - INFO - Starting cleanup process
+2024-11-12 01:29:22,562 - INFO - Attempting to stop pgautofailover.service
+2024-11-12 01:29:22,583 - INFO - Disabling pgautofailover.service
+2024-11-12 01:29:22,711 - INFO - Removing pgautofailover.service file
+2024-11-12 01:29:22,725 - INFO - Reloading systemd daemon
+2024-11-12 01:29:22,855 - INFO - Resetting failed units
+2024-11-12 01:29:22,873 - INFO - Folder not found: /var/lib/pgsql/monitor
+2024-11-12 01:29:22,873 - INFO - Folder not found: /var/lib/pgsql/ha
+2024-11-12 01:29:22,873 - INFO - Deleting folder: /var/lib/pgsql/.config
+2024-11-12 01:29:22,873 - INFO - Successfully deleted /var/lib/pgsql/.config
+2024-11-12 01:29:22,873 - INFO - Deleting folder: /var/lib/pgsql/.local
+2024-11-12 01:29:22,873 - INFO - Successfully deleted /var/lib/pgsql/.local
+2024-11-12 01:29:22,873 - INFO - Cleanup process completed
+[postgres@rabbitmq1 pg_auto_failover_deployment]$ ./pg_auto_failover_deploy.py
+Are you deploying a monitor node or data node? (monitor/data): monitor
+Environment variables set in pg_env.sh:
+
+export PATH=$PATH:/opt/vmware/postgres/14/bin
+export PGDATA=/var/lib/pgsql/monitor
+
+To use these variables, run: source pg_env.sh
+Error executing command 'pg_autoctl create monitor --auth trust --ssl-self-signed --pgdata ~/monitor': 01:29:27 2935444 INFO  Using default --ssl-mode "require"
+01:29:27 2935444 INFO  Using --ssl-self-signed: pg_autoctl will create self-signed certificates, allowing for encrypted network traffic
+01:29:27 2935444 WARN  Self-signed certificates provide protection against eavesdropping; this setup does NOT protect against Man-In-The-Middle attacks nor Impersonation attacks.
+01:29:27 2935444 WARN  See https://www.postgresql.org/docs/current/libpq-ssl.html for details
+01:29:27 2935444 INFO  Initialising a PostgreSQL cluster at "/var/lib/pgsql/monitor"
+01:29:27 2935444 INFO  /opt/vmware/postgres/14/bin/pg_ctl initdb -s -D /var/lib/pgsql/monitor --option '--auth=trust'
+01:29:28 2935444 INFO   /bin/openssl req -new -x509 -days 365 -nodes -text -out /var/lib/pgsql/monitor/server.crt -keyout /var/lib/pgsql/monitor/server.key -subj "/CN=rabbitmq1"
+01:29:28 2935444 INFO  Started pg_autoctl postgres service with pid 2935461
+01:29:28 2935461 INFO   /opt/vmware/postgres/14/bin/pg_autoctl do service postgres --pgdata /var/lib/pgsql/monitor -v
+01:29:28 2935444 INFO  Started pg_autoctl monitor-init service with pid 2935462
+01:29:28 2935467 INFO   /opt/vmware/postgres/14/bin/postgres -D /var/lib/pgsql/monitor -p 5432 -h *
+01:29:28 2935461 INFO  Postgres is now serving PGDATA "/var/lib/pgsql/monitor" on port 5432 with pid 2935467
+01:29:28 2935462 WARN  NOTICE:  installing required extension "btree_gist"
+01:29:28 2935462 INFO  Granting connection privileges on 10.121.163.0/25
+01:29:28 2935462 INFO  Reloading Postgres configuration and HBA rules
+01:29:28 2935462 INFO  Your pg_auto_failover monitor instance is now ready on port 5432.
+01:29:28 2935462 INFO  Monitor has been successfully initialized.
+01:29:28 2935444 WARN  pg_autoctl service monitor-init exited with exit status 0
+01:29:28 2935461 INFO  Postgres controller service received signal SIGTERM, terminating
+01:29:28 2935461 INFO  Stopping pg_autoctl postgres service
+01:29:28 2935461 INFO  /opt/vmware/postgres/14/bin/pg_ctl --pgdata /var/lib/pgsql/monitor --wait stop --mode fast
+01:29:28 2935444 INFO  Stop pg_autoctl
+
+Error executing command 'sudo systemctl enable pgautofailover': Created symlink /etc/systemd/system/multi-user.target.wants/pgautofailover.service → /etc/systemd/system/pgautofailover.service.
+
+Monitor Node URI:
+        Type |    Name | Connection String
+-------------+---------+-------------------------------
+     monitor | monitor | postgres://autoctl_node@rabbitmq1:5432/pg_auto_failover?sslmode=require
+   formation | default |
+
+
+2024-11-12 01:29:29,154 - INFO - Added trust entry to /var/lib/pgsql/monitor/pg_hba.conf
+```
+
+// Create the Data node
+```
+[postgres@rabbitmq2 ~]$ ./pg_auto_failover_deploy.py
+Are you deploying a monitor node or data node? (monitor/data): data
+Environment variables set in pg_env.sh:
+
+export PATH=$PATH:/opt/vmware/postgres/14/bin
+export PGDATA=/var/lib/pgsql/ha
+
+To use these variables, run: source pg_env.sh
+Enter the monitor node's URI: postgres://autoctl_node@rabbitmq1:5432/pg_auto_failover?sslmode=require
+Error executing command 'pg_autoctl create postgres --pgdata ha --auth trust --ssl-self-signed --username ha-admin --dbname appdb --hostname rabbitmq2 --monitor 'postgres://autoctl_node@rabbitmq1:5432/pg_auto_failover?sslmode=require'': 00:24:53 1008457 INFO  Using default --ssl-mode "require"
+00:24:53 1008457 INFO  Using --ssl-self-signed: pg_autoctl will create self-signed certificates, allowing for encrypted network traffic
+00:24:53 1008457 WARN  Self-signed certificates provide protection against eavesdropping; this setup does NOT protect against Man-In-The-Middle attacks nor Impersonation attacks.
+00:24:53 1008457 WARN  See https://www.postgresql.org/docs/current/libpq-ssl.html for details
+00:24:53 1008457 INFO  Started pg_autoctl postgres service with pid 1008459
+00:24:53 1008459 INFO   /opt/vmware/postgres/14/bin/pg_autoctl do service postgres --pgdata ha -v
+00:24:53 1008457 INFO  Started pg_autoctl node-init service with pid 1008460
+00:24:53 1008460 INFO  Registered node 1 "node_1" (rabbitmq2:5432) in formation "default", group 0, state "single"
+00:24:53 1008460 INFO  Writing keeper state file at "/var/lib/pgsql/.local/share/pg_autoctl/var/lib/pgsql/ha/pg_autoctl.state"
+00:24:53 1008460 INFO  Writing keeper init state file at "/var/lib/pgsql/.local/share/pg_autoctl/var/lib/pgsql/ha/pg_autoctl.init"
+00:24:53 1008460 INFO  Successfully registered as "single" to the monitor.
+00:24:53 1008460 INFO  FSM transition from "init" to "single": Start as a single node
+00:24:53 1008460 INFO  Initialising postgres as a primary
+00:24:53 1008460 INFO  Initialising a PostgreSQL cluster at "ha"
+00:24:53 1008460 INFO  /opt/vmware/postgres/14/bin/pg_ctl initdb -s -D ha --option '--auth=trust'
+00:24:54 1008460 WARN  Failed to resolve hostname "rabbitmq2" to an IP address that resolves back to the hostname on a reverse DNS lookup.
+00:24:54 1008460 WARN  Postgres might deny connection attempts from "rabbitmq2", even with the new HBA rules.
+00:24:54 1008460 WARN  Hint: correct setup of HBA with host names requires proper reverse DNS setup. You might want to use IP addresses.
+00:24:54 1008460 WARN  Using IP address "10.121.163.104" in HBA file instead of hostname "rabbitmq2"
+00:24:54 1008460 INFO   /bin/openssl req -new -x509 -days 365 -nodes -text -out /var/lib/pgsql/ha/server.crt -keyout /var/lib/pgsql/ha/server.key -subj "/CN=rabbitmq2"
+00:24:54 1008485 INFO   /opt/vmware/postgres/14/bin/postgres -D /var/lib/pgsql/ha -p 5432 -h *
+00:24:54 1008459 INFO  Postgres is now serving PGDATA "/var/lib/pgsql/ha" on port 5432 with pid 1008485
+00:24:54 1008460 INFO  CREATE USER ha-admin
+00:24:54 1008460 INFO  CREATE DATABASE appdb;
+00:24:54 1008460 INFO  CREATE EXTENSION pg_stat_statements;
+00:24:54 1008460 INFO  Disabling synchronous replication
+00:24:54 1008460 INFO  Reloading Postgres configuration and HBA rules
+00:24:54 1008460 INFO   /bin/openssl req -new -x509 -days 365 -nodes -text -out /var/lib/pgsql/ha/server.crt -keyout /var/lib/pgsql/ha/server.key -subj "/CN=rabbitmq2"
+00:24:54 1008460 INFO  Contents of "/var/lib/pgsql/ha/postgresql-auto-failover.conf" have changed, overwriting
+00:24:54 1008460 WARN  Failed to resolve hostname "rabbitmq1" to an IP address that resolves back to the hostname on a reverse DNS lookup.
+00:24:54 1008460 WARN  Postgres might deny connection attempts from "rabbitmq1", even with the new HBA rules.
+00:24:54 1008460 WARN  Hint: correct setup of HBA with host names requires proper reverse DNS setup. You might want to use IP addresses.
+00:24:54 1008460 WARN  Using IP address "10.121.163.38" in HBA file instead of hostname "rabbitmq1"
+00:24:54 1008460 INFO  Reloading Postgres configuration and HBA rules
+00:24:54 1008460 INFO  Transition complete: current state is now "single"
+00:24:54 1008460 INFO  keeper has been successfully initialized.
+00:24:55 1008457 WARN  pg_autoctl service node-init exited with exit status 0
+00:24:55 1008459 INFO  Postgres controller service received signal SIGTERM, terminating
+00:24:55 1008459 INFO  Stopping pg_autoctl postgres service
+00:24:55 1008459 INFO  /opt/vmware/postgres/14/bin/pg_ctl --pgdata /var/lib/pgsql/ha --wait stop --mode fast
+00:24:55 1008457 INFO  Stop pg_autoctl
+
+Error executing command 'sudo systemctl enable pgautofailover': Created symlink /etc/systemd/system/multi-user.target.wants/pgautofailover.service → /etc/systemd/system/pgautofailover.service.
+
+2024-11-12 00:24:55,548 - INFO - Added trust entry to /var/lib/pgsql/ha/pg_hba.conf
+[postgres@rabbitmq2 ~]$ . pg_env.sh
+[postgres@rabbitmq2 ~]$ pg_autoctl show state
+  Name |  Node |      Host:Port |       TLI: LSN |   Connection |      Reported State |      Assigned State
+-------+-------+----------------+----------------+--------------+---------------------+--------------------
+node_1 |     1 | rabbitmq2:5432 |   1: 0/17625B8 |   read-write |              single |              single
+```
+
