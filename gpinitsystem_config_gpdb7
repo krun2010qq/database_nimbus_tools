@@ -6,15 +6,12 @@
 #### REQUIRED PARAMETERS
 ################################################
 
-#### Name of this Greenplum system enclosed in quotes.
-ARRAY_NAME="Greenplum Data Platform"
-
 #### Naming convention for utility-generated data directories.
 SEG_PREFIX=gpseg
 
 #### Base number by which primary segment port numbers 
 #### are calculated.
-PORT_BASE=6000
+PORT_BASE=6700
 
 #### File system location(s) where primary segment data directories 
 #### will be created. The number of locations in the list dictate
@@ -22,23 +19,20 @@ PORT_BASE=6000
 #### physical host (if multiple addresses for a host are listed in 
 #### the hostfile, the number of segments will be spread evenly across
 #### the specified interface addresses).
-declare -a DATA_DIRECTORY=(/data/primary6 /data/primary6)
+declare -a DATA_DIRECTORY=(/data/primary7 /data/primary7) 
 
-#### OS-configured hostname or IP address of the master host.
-MASTER_HOSTNAME=support03
+#### OS-configured hostname or IP address of the coordinator host.
+COORDINATOR_HOSTNAME=support03
 
-#### File system location where the master data directory 
+#### File system location where the coordinator data directory 
 #### will be created.
-MASTER_DIRECTORY=/data/master6
+COORDINATOR_DIRECTORY=/data/master7
 
-#### Port number for the master instance. 
-MASTER_PORT=5436
+#### Port number for the coordinator instance. 
+COORDINATOR_PORT=5437
 
 #### Shell utility used to connect to remote hosts.
 TRUSTED_SHELL=ssh
-
-#### Maximum log file segments between automatic WAL checkpoints.
-CHECK_POINT_SEGMENTS=8
 
 #### Default server-side character set encoding.
 ENCODING=UNICODE
@@ -49,13 +43,13 @@ ENCODING=UNICODE
 
 #### Base number by which mirror segment port numbers 
 #### are calculated.
-MIRROR_PORT_BASE=7000
+MIRROR_PORT_BASE=7700
 
 #### File system location(s) where mirror segment data directories 
 #### will be created. The number of mirror locations must equal the
 #### number of primary locations as specified in the 
 #### DATA_DIRECTORY parameter.
-declare -a MIRROR_DATA_DIRECTORY=(/data/mirror6 /data/mirror6)
+declare -a MIRROR_DATA_DIRECTORY=(/data/mirror7 /data/mirror7)
 
 
 ################################################
