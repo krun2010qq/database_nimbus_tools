@@ -83,7 +83,7 @@ export PGDATA={pgdata_dir}
 
 def deploy_monitor_node():
     commands = [
-        'pg_autoctl create monitor --auth trust --ssl-self-signed --pgdata monitor',
+        'pg_autoctl create monitor --auth trust --ssl-self-signed --pgdata ~/monitor',
         'pg_autoctl -q show systemd --pgdata ~/monitor > pgautofailover.service',
         'sudo mv pgautofailover.service /etc/systemd/system',
         'sudo restorecon -v /etc/systemd/system/pgautofailover.service',
@@ -110,7 +110,7 @@ def deploy_data_node():
     hostname = os.popen('hostname').read().strip()
 
     commands = [
-        f"pg_autoctl create postgres --pgdata ha --auth trust --ssl-self-signed --username ha-admin --dbname appdb --hostname {hostname} --monitor '{monitor_uri}'",
+        f"pg_autoctl create postgres --pgdata ~/ha --auth trust --ssl-self-signed --username ha-admin --dbname appdb --hostname {hostname} --monitor '{monitor_uri}'",
         'pg_autoctl -q show systemd --pgdata ~/ha > pgautofailover.service',
         'sudo mv pgautofailover.service /etc/systemd/system',
         'sudo restorecon -v /etc/systemd/system/pgautofailover.service',
