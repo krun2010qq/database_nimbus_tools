@@ -47,7 +47,7 @@ EULA acccepted for vmware-greenplum/7.2.0
 
 ### How to deploy the pg_auto_failover automatically
 
-// Firstly remove all the previous installations
+Firstly remove all the previous installations
 ```
 [postgres@rabbitmq2 pg_auto_failover_deployment]$ ./remove_pg_auto_failover.py
 2024-11-12 01:29:51,986 - INFO - Starting cleanup process
@@ -66,22 +66,8 @@ EULA acccepted for vmware-greenplum/7.2.0
 2024-11-12 01:29:52,540 - INFO - Cleanup process completed
 ```
 
-// Then set up the monitor
+Then set up the monitor
 ```
-[postgres@rabbitmq1 pg_auto_failover_deployment]$ ./remove_pg_auto_failover.py
-2024-11-12 01:29:22,562 - INFO - Starting cleanup process
-2024-11-12 01:29:22,562 - INFO - Attempting to stop pgautofailover.service
-2024-11-12 01:29:22,583 - INFO - Disabling pgautofailover.service
-2024-11-12 01:29:22,711 - INFO - Removing pgautofailover.service file
-2024-11-12 01:29:22,725 - INFO - Reloading systemd daemon
-2024-11-12 01:29:22,855 - INFO - Resetting failed units
-2024-11-12 01:29:22,873 - INFO - Folder not found: /var/lib/pgsql/monitor
-2024-11-12 01:29:22,873 - INFO - Folder not found: /var/lib/pgsql/ha
-2024-11-12 01:29:22,873 - INFO - Deleting folder: /var/lib/pgsql/.config
-2024-11-12 01:29:22,873 - INFO - Successfully deleted /var/lib/pgsql/.config
-2024-11-12 01:29:22,873 - INFO - Deleting folder: /var/lib/pgsql/.local
-2024-11-12 01:29:22,873 - INFO - Successfully deleted /var/lib/pgsql/.local
-2024-11-12 01:29:22,873 - INFO - Cleanup process completed
 [postgres@rabbitmq1 pg_auto_failover_deployment]$ ./pg_auto_failover_deploy.py
 Are you deploying a monitor node or data node? (monitor/data): monitor
 Environment variables set in pg_env.sh:
@@ -89,7 +75,7 @@ Environment variables set in pg_env.sh:
 export PATH=$PATH:/opt/vmware/postgres/14/bin
 export PGDATA=/var/lib/pgsql/monitor
 
-To use these variables, run: source pg_env.sh
+To use these variables, run: source pg_env.sh  <--- Env Vars are here
 Error executing command 'pg_autoctl create monitor --auth trust --ssl-self-signed --pgdata ~/monitor': 01:29:27 2935444 INFO  Using default --ssl-mode "require"
 01:29:27 2935444 INFO  Using --ssl-self-signed: pg_autoctl will create self-signed certificates, allowing for encrypted network traffic
 01:29:27 2935444 WARN  Self-signed certificates provide protection against eavesdropping; this setup does NOT protect against Man-In-The-Middle attacks nor Impersonation attacks.
@@ -118,14 +104,14 @@ Error executing command 'sudo systemctl enable pgautofailover': Created symlink 
 Monitor Node URI:
         Type |    Name | Connection String
 -------------+---------+-------------------------------
-     monitor | monitor | postgres://autoctl_node@rabbitmq1:5432/pg_auto_failover?sslmode=require
+     monitor | monitor | postgres://autoctl_node@rabbitmq1:5432/pg_auto_failover?sslmode=require   <--- We need to use this URI to create the data node 
    formation | default |
 
 
 2024-11-12 01:29:29,154 - INFO - Added trust entry to /var/lib/pgsql/monitor/pg_hba.conf
 ```
 
-// Create the Data node
+Create the Data node
 ```
 [postgres@rabbitmq2 ~]$ ./pg_auto_failover_deploy.py
 Are you deploying a monitor node or data node? (monitor/data): data
