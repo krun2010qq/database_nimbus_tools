@@ -1,121 +1,146 @@
-#!/bin/python3
-import os
+#! /usr/bin/python3
 import subprocess
-import sys
+import os
+import requests
+import json
+from tabulate import tabulate
 
-def run_command(command):
-    """Run shell command and capture output."""
-    try:
-        result = subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-        return result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        print(f"Error executing command '{command}': {e.stderr}")
-        sys.exit(1)
+BASE_URL = "https://network.tanzu.vmware.com/api/v2"
 
-def pivnet_login(api_token):
-    """Login to Pivotal Network (PivNet) using the provided API token."""
-    command = f"pivnet login --api-token {api_token}"
-    output = run_command(command)
-    print(output)
-
-def accept_eula(product_slug, release_version):
-    """Accept EULA for the specified product and release version."""
-    command = f"pivnet accept-eula --product-slug='{product_slug}' --release-version='{release_version}'"
-    output = run_command(command)
-    print(output)
-
-def download_greenplum(product_slug, release_version, os_version):
-    """Download Greenplum for the specified product, release version, and OS version."""
-    if release_version.startswith('6') or release_version.startswith('5'):
-        if os_version == 'redhat7':
-            file_name = f"greenplum-db-{release_version}-rhel7-x86_64.rpm"
-        elif os_version == 'redhat8':
-            file_name = f"greenplum-db-{release_version}-rhel8-x86_64.rpm"
-        elif os_version == 'redhat9':
-            file_name = f"greenplum-db-{release_version}-rhel9-x86_64.rpm"
-        else:
-            print(f"Unsupported OS version: {os_version}")
-            sys.exit(1)
-    elif release_version.startswith('7'):
-        if os_version == 'redhat8':
-            file_name = f"greenplum-db-{release_version}-el8-x86_64.rpm"
-        elif os_version == 'redhat9':
-            file_name = f"greenplum-db-{release_version}-el8-x86_64.rpm"
-        else:
-            print(f"Unsupported OS version: {os_version}")
-            sys.exit(1)
+def get_refresh_token():
+    home = os.path.expanduser("~")
+    token_file = os.path.join(home, ".REFRESH_TOKEN")
+    if os.path.exists(token_file):
+        with open(token_file, 'r') as f:
+            return f.read().strip()
     else:
-        print (f"Something is wrong,release version:{release_version}, os: {os_version}")
-        sys.exit(1)
+        return input("Please enter your REFRESH_TOKEN: ")
 
-    command = f"pivnet download-product-files --product-slug='{product_slug}' --release-version='{release_version}' -g '{file_name}'"
-    output = run_command(command)
-    print(output)
+def get_access_token(refresh_token):
+    url = f"{BASE_URL}/authentication/access_tokens"
+    headers = {"Content-Type": "application/json"}
+    data = {"refresh_token": refresh_token}
+    response = requests.post(url, headers=headers, json=data)
+    return response.json()['access_token']
 
-def list_greenplum_versions(product_slug):
-    """List available Greenplum versions."""
-    command = f"pivnet rs --product-slug='{product_slug}' | awk -F '|' 'NR>3 && $3 != \"\" {{print $3}}' | sort -r -V"
-    output = run_command(command)
-    versions = [version.strip() for version in output.split('\n') if version.strip()]
-    return versions
+def get_products(access_token):
+    url = f"{BASE_URL}/products"
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+    response = requests.get(url, headers=headers)
+    products = response.json()['products']
+    filtered_products = [p for p in products if 'greenplum' in p['name'].lower() or 'postgres' in p['name'].lower()]
+    return filtered_products
 
-def select_greenplum_version(product_slug):
-    """Ask user to select a Greenplum version."""
-    versions = list_greenplum_versions(product_slug)
-    if not versions:
-        print("No Greenplum versions found.")
-        sys.exit(1)
-    while True:
-        print("Available Greenplum versions:")
-        for idx in range(0, len(versions), 6):
-            line = versions[idx:idx + 6]
-            print("  ".join(f"{i+1}:[{v}]" for i, v in enumerate(line, start=idx)))
+def get_releases(access_token, product_slug):
+    url = f"{BASE_URL}/products/{product_slug}/releases"
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+    response = requests.get(url, headers=headers)
+    return response.json()['releases']
 
-        version_choice = input("Enter the number corresponding to the Greenplum version you want to download: ").strip()
-        try:
-            version_index = int(version_choice) - 1
-            if 0 <= version_index < len(versions):
-                return versions[version_index]
-            else:
-                print("Invalid choice. Please enter a valid number.")
-        except ValueError:
-            print("Invalid input. Please enter a valid number.")
+def accept_eula(access_token, eula_url):
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+    response = requests.post(eula_url, headers=headers)
+    return response.status_code == 200
 
-def select_os_version():
-    """Ask user to select an OS version."""
-    while True:
-        os_version = input("Enter your OS version (redhat7, redhat8,redhat9): ").strip().lower()
-        if os_version in ['redhat7', 'redhat8','redhat9']:
-            return os_version
-        else:
-            print("Unsupported OS version. Please choose from redhat7,redhat8,redhat9.")
+def get_product_files(access_token, product_files_url):
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+    response = requests.get(product_files_url, headers=headers)
+    return response.json()['product_files']
+
+def get_download_url(access_token, download_url):
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+    response = requests.post(download_url, headers=headers, allow_redirects=False)
+    return response.headers['Location']
+
+def download_file(url, filename):
+    response = requests.get(url, stream=True)
+    with open(filename, 'wb') as f:
+        for chunk in response.iter_content(chunk_size=8192):
+            f.write(chunk)
+
+def install_rpm_if_needed(filename):
+    # Check if the downloaded file is a Greenplum RPM
+    if "greenplum-db-" in filename and any(rhel_version in filename for rhel_version in ["rhel7", "rhel8", "rhel9","el8","el9"]):
+        # Check for existing Greenplum RPM installations
+        installed_rpms = subprocess.getoutput("rpm -qa | grep greenplum-db")
+        if installed_rpms:
+            print("Existing Greenplum RPMs found:")
+            print(installed_rpms)
+            # Remove existing RPMs
+            for rpm in installed_rpms.splitlines():
+                print(f"Removing {rpm}...")
+                subprocess.run(["rpm", "-e", "--justdb", rpm], check=True)
+
+        # Prompt user to install the new RPM
+        print(f"Installing {filename}...")
+        subprocess.run(["rpm", "-ivh", filename], check=True)
+
+        # Change ownership of the installed directory
+        version = filename.split('-')[2]  # Extract version from filename
+        directory = f"/usr/local/greenplum-db-{version}"
+        print(f"Changing ownership of {directory} to gpadmin:gpadmin...")
+        subprocess.run(["chown", "-R", "gpadmin:gpadmin", directory], check=True)
+
 
 def main():
-    try:
-        # Ask for PivNet token
-        if os.path.exists('.pivnet_token'):
-            print("Found the Pivnet Token on the local system, using the local token to login")
-            with open('.pivnet_token', 'r') as file:
-                pivnet_token = file.read().strip()
-        else:
-           pivnet_token = input("Enter your PivNet API token: ").strip()
-	# Ask for OS version
-        print("Logging in the Pivnet")
-        pivnet_login(pivnet_token)
-        os_version = select_os_version()
+    refresh_token = get_refresh_token()
+    access_token = get_access_token(refresh_token)
 
-        # Select Greenplum version
-        product_slug = 'vmware-greenplum'
-        greenplum_version = select_greenplum_version(product_slug)
+    products = get_products(access_token)
+    print("Available products:")
+    for i, product in enumerate(products, 1):
+        print(f"{i}. {product['name']} ({product['slug']})")
 
-        # Accept EULA and download Greenplum
-        accept_eula(product_slug, greenplum_version)
-        download_greenplum(product_slug, greenplum_version, os_version)
+    product_choice = int(input("Enter the number of the product you want to download: ")) - 1
+    chosen_product = products[product_choice]
 
-    except KeyboardInterrupt:
-        print("\nProcess interrupted. Exiting...")
-        sys.exit(1)
+    releases = get_releases(access_token, chosen_product['slug'])
+    print("\nAvailable releases:")
+    release_data = []
+    for i, release in enumerate(releases, 1):
+        release_data.append([i, release['version'], release['end_of_support_date']])
+    print(tabulate(release_data, headers=["#", "Version", "End of Support"]))
+
+    release_choice = int(input("Enter the number of the release you want to download: ")) - 1
+    chosen_release = releases[release_choice]
+
+    if not accept_eula(access_token, chosen_release['_links']['eula_acceptance']['href']):
+        print("Failed to accept EULA. Exiting.")
+        return
+
+    product_files = get_product_files(access_token, chosen_release['_links']['product_files']['href'])
+    print("\nAvailable files:")
+    for i, file in enumerate(product_files, 1):
+        print(f"{i}. {file['name']}")
+
+    file_choice = int(input("Enter the number of the file you want to download: ")) - 1
+    chosen_file = product_files[file_choice]
+
+    download_url = get_download_url(access_token, chosen_file['_links']['download']['href'])
+    filename = chosen_file['aws_object_key'].split('/')[-1]
+    print(f"Downloading {filename}...")
+    download_file(download_url, filename)
+    if "greenplum-db-" in filename and any(rhel_version in filename for rhel_version in ["rhel7", "rhel8", "rhel9","el8","el9"]):
+        install_choice = input(f"Do you want to install {filename}? (yes/no, we only support install the GPDB RPM files now): ").strip().lower()
+        if install_choice == 'yes':
+            install_rpm_if_needed(filename)
+            
+    print(f"Download complete. File saved as {filename}")
 
 if __name__ == "__main__":
     main()
-
