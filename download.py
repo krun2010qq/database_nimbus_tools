@@ -31,7 +31,7 @@ def get_products(access_token):
     }
     response = requests.get(url, headers=headers)
     products = response.json()['products']
-    filtered_products = [p for p in products if 'greenplum' in p['name'].lower() or 'postgres' in p['name'].lower()]
+    filtered_products = [p for p in products if 'greenplum' in p['name'].lower() or 'postgres' in p['name'].lower() or 'rabbit' in p['name'].lower()]
     return filtered_products
 
 def get_releases(access_token, product_slug):
@@ -68,10 +68,19 @@ def get_download_url(access_token, download_url):
     return response.headers['Location']
 
 def download_file(url, filename):
+# Ensure the target directory exists
+    target_dir = "/data/packages"
+    os.makedirs(target_dir, exist_ok=True)
+    
+    # Full path for the downloaded file
+    full_path = os.path.join(target_dir, filename)
+    
     response = requests.get(url, stream=True)
-    with open(filename, 'wb') as f:
+    with open(full_path, 'wb') as f:
         for chunk in response.iter_content(chunk_size=8192):
             f.write(chunk)
+    print(f"File downloaded to: {full_path}")
+    return full_path
 
 def install_rpm_if_needed(filename):
     # Check if the downloaded file is a Greenplum RPM
@@ -134,11 +143,12 @@ def main():
     download_url = get_download_url(access_token, chosen_file['_links']['download']['href'])
     filename = chosen_file['aws_object_key'].split('/')[-1]
     print(f"Downloading {filename}...")
-    download_file(download_url, filename)
+    full_path = download_file(download_url, filename)
+    print (f"Full Path is {full_path}")
     if "greenplum-db-" in filename and any(rhel_version in filename for rhel_version in ["rhel7", "rhel8", "rhel9","el8","el9"]):
         install_choice = input(f"Do you want to install {filename}? (yes/no, we only support install the GPDB RPM files now): ").strip().lower()
         if install_choice == 'yes':
-            install_rpm_if_needed(filename)
+            install_rpm_if_needed(full_path)
             
     print(f"Download complete. File saved as {filename}")
 
