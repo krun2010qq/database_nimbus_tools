@@ -22,7 +22,7 @@ PORT_BASE=6700
 declare -a DATA_DIRECTORY=(/data/primary7 /data/primary7) 
 
 #### OS-configured hostname or IP address of the coordinator host.
-COORDINATOR_HOSTNAME=support03
+COORDINATOR_HOSTNAME=gpdb01
 
 #### File system location where the coordinator data directory 
 #### will be created.

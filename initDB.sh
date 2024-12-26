@@ -5,6 +5,25 @@ debug_print() {
     echo "[DEBUG] $1"
 }
 
+
+set_max_open_files() {
+    debug_print "Setting max open files limit"
+
+    # Update system-wide file descriptor limit
+    echo "fs.file-max = 65535" | sudo tee -a /etc/sysctl.conf
+    sudo sysctl -p
+
+    # Update user-level limits
+    echo "* soft nofile 65535" | sudo tee -a /etc/security/limits.conf
+    echo "* hard nofile 65535" | sudo tee -a /etc/security/limits.conf
+
+    # Ensure PAM applies the limits
+    echo "session required pam_limits.so" | sudo tee -a /etc/pam.d/common-session
+    echo "session required pam_limits.so" | sudo tee -a /etc/pam.d/common-session-noninteractive
+
+    debug_print "Max open files limit set to 65535"
+}
+
 # Disable IPv6
 disable_ipv6() {
     debug_print "Disabling IPv6"
@@ -31,7 +50,7 @@ current_hostname=$(hostname)
 debug_print "Current hostname: $current_hostname"
 
 # Prompt for new hostname
-read -p "Enter the new hostname (leave blank to keep current): " new_hostname
+read -p "Enter the new hostname (leave blank to keep the current hostname): " new_hostname
 if [ -n "$new_hostname" ]; then
     debug_print "Updating hostname from $current_hostname to $new_hostname"
     sudo hostnamectl set-hostname $new_hostname
@@ -43,6 +62,8 @@ fi
 
 # Disable IPv6
 disable_ipv6
+# Set Max Open file
+set_max_open_files
 
 # Update gpinitsystem_config_gpdb6 file
 debug_print "Updating gpinitsystem_config_gpdb6 file"
