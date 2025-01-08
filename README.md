@@ -5,6 +5,10 @@
 1) The script would directly ask you for the .REFRESH_TOKEN
 2) The script would also try to detect if there is any .REFRESH_TOKEN token file. If it has the `.REFRESH_TOKEN` token file, then it would bypass the authentication and directly download the GPDB
 
+Screenshot on how get the refresh token:
+![image](https://github.com/user-attachments/assets/74242dd8-6f05-433e-99e2-4b4113969e8c)
+
+
 ### Example: 
 
 ```
