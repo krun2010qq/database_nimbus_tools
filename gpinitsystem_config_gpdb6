@@ -25,7 +25,7 @@ PORT_BASE=6000
 declare -a DATA_DIRECTORY=(/data/primary6 /data/primary6)
 
 #### OS-configured hostname or IP address of the master host.
-MASTER_HOSTNAME=gpdb01
+MASTER_HOSTNAME=gpdb11
 
 #### File system location where the master data directory 
 #### will be created.

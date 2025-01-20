@@ -33,14 +33,14 @@ echo -e "${CYAN}==================================================${RESET}"
 # Display professional guidelines
 echo -e "${GREEN}${BOLD}All useful scripts are located in:${RESET} ~/database_nimbus_tools"
 echo
-echo -e "${BLUE}${BOLD}1. To download software with *root* account:${RESET}"
+echo -e "${BLUE}${BOLD}1. To download software with *ROOT* account:${RESET}"
 echo -e "   Use ${CYAN}download.py${RESET} (alias: ${MAGENTA}gpdownload${RESET})."
 echo
 echo -e "${BLUE}${BOLD}2. To check the current Greenplum version with *gpadmin* account:${RESET}"
 echo -e "   Run ${CYAN}List_Version.sh${RESET} (alias: ${MAGENTA}gpdb${RESET})."
 echo
-echo -e "${BLUE}${BOLD}3. To reinitialize Greenplum installation with *root* account:${RESET}"
-echo -e "   Execute ${CYAN}initDB.sh${RESET} (alias: ${MAGENTA}reinitdb${RESET})."
+echo -e "${BLUE}${BOLD}3. To reinitialize Greenplum installation, run initDB.sh with gpadmin account after sourcing the GPDB Env with gpdb tool:${RESET} "
+echo -e "   Execute ${CYAN}/home/gpadmin/database_nimbus_tools/initDB.sh in database_nimbus_tools folder${RESET} " 
 echo
 echo -e "${RED}${BOLD}Note:${RESET} Always back up your data before reinitializing."
 echo -e "${CYAN}==================================================${RESET}"
