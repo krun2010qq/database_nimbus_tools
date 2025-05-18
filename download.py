@@ -31,7 +31,7 @@ def get_products(access_token):
     }
     response = requests.get(url, headers=headers)
     products = response.json()['products']
-    filtered_products = [p for p in products if 'greenplum' in p['name'].lower() or 'postgres' in p['name'].lower() or 'rabbit' in p['name'].lower()]
+    filtered_products = [p for p in products if 'greenplum' in p['name'].lower() or 'postgres' in p['name'].lower() or 'rabbit' in p['name'].lower() or 'data' in p['name'].lower()] 
     return filtered_products
 
 def get_releases(access_token, product_slug):
