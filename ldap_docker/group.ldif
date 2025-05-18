@@ -1,0 +1,5 @@
+dn: cn=users,ou=users,dc=test,dc=com
+objectClass: posixGroup
+cn: users
+gidNumber: 10001
+
