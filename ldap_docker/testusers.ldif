@@ -1,0 +1,26 @@
+dn: uid=testuser1,ou=users,dc=test,dc=com
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: top
+cn: Test User1
+sn: User1
+uid: testuser1
+uidNumber: 10001
+gidNumber: 10001
+homeDirectory: /home/testuser1
+loginShell: /bin/bash
+userPassword: testpass1
+
+
+dn: uid=testuser2,ou=users,dc=test,dc=com
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: top
+cn: Test User2
+sn: User2
+uid: testuser2
+uidNumber: 10002
+gidNumber: 10001
+homeDirectory: /home/testuser2
+loginShell: /bin/bash
+userPassword: testpass2
