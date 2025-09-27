@@ -93,17 +93,17 @@ def install_rpm_if_needed(filename):
             # Remove existing RPMs
             for rpm in installed_rpms.splitlines():
                 print(f"Removing {rpm}...")
-                subprocess.run(["rpm", "-e", "--justdb", rpm], check=True)
+                subprocess.run(["sudo","rpm", "-e", "--justdb", rpm], check=True)
 
         # Prompt user to install the new RPM
         print(f"Installing {filename}...")
-        subprocess.run(["rpm", "-ivh", filename], check=True)
+        subprocess.run(["sudo","rpm", "-ivh", filename], check=True)
 
         # Change ownership of the installed directory
         version = filename.split('-')[2]  # Extract version from filename
         directory = f"/usr/local/greenplum-db-{version}"
         print(f"Changing ownership of {directory} to gpadmin:gpadmin...")
-        subprocess.run(["chown", "-R", "gpadmin:gpadmin", directory], check=True)
+        subprocess.run(["sudo","chown", "-R", "gpadmin:gpadmin", directory], check=True)
 
 
 def main():
