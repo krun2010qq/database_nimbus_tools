@@ -389,3 +389,4 @@ Error executing command 'sudo systemctl enable pgautofailover': Created symlink 
 node_1 |     1 | rabbitmq2:5432 |   1: 0/17625B8 |   read-write |              single |              single
 ```
 
+On Jun3 2026, we add the support for mutiple node
